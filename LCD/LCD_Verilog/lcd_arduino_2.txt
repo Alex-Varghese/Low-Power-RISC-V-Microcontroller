@@ -1,0 +1,233 @@
+//---------------------------------------------------------
+// --------------------- LCD START ------------------------
+//---------------------------------------------------------
+const int RS = 12;
+const int E = 11;
+const int D4 = 5;
+const int D5 = 4;
+const int D6 = 3;
+const int D7 = 2;
+
+bool bFourBitMode = false;
+char ReadSendState = -1;
+
+unsigned char Battery_6[8] =
+{
+  0b00100,
+  0b11111,
+  0b11111,
+  0b11111,
+  0b11111,
+  0b11111,
+  0b11111,
+  0b11111
+};
+
+unsigned char Battery_5[8] =
+{
+  0b00100,
+  0b11111,
+  0b10001,
+  0b11111,
+  0b11111,
+  0b11111,
+  0b11111,
+  0b11111
+};
+
+unsigned char Battery_4[8] =
+{
+  0b00100,
+  0b11111,
+  0b10001,
+  0b11111,
+  0b11111,
+  0b11111,
+  0b11111,
+  0b11111
+};
+
+unsigned char Battery_3[8] =
+{
+  0b00100,
+  0b11111,
+  0b10001,
+  0b10001,
+  0b11111,
+  0b11111,
+  0b11111,
+  0b11111
+};
+
+unsigned char Battery_2[8] =
+{
+  0b00100,
+  0b11111,
+  0b10001,
+  0b10001,
+  0b10001,
+  0b11111,
+  0b11111,
+  0b11111
+};
+
+unsigned char Battery_1[8] =
+{
+  0b00100,
+  0b11111,
+  0b10001,
+  0b10001,
+  0b10001,
+  0b10001,
+  0b11111,
+  0b11111
+};
+
+unsigned char Battery_0[8] =
+{
+  0b00100,
+  0b11111,
+  0b10001,
+  0b10001,
+  0b10001,
+  0b10001,
+  0b10001,
+  0b11111
+};
+
+void LcdSend(unsigned char Data)
+{
+  if (bFourBitMode)
+  {
+    digitalWrite(D4, (Data >> 4) & 0x01);
+    digitalWrite(D5, (Data >> 5) & 0x01);
+    digitalWrite(D6, (Data >> 6) & 0x01);
+    digitalWrite(D7, (Data >> 7) & 0x01);
+    
+    delayMicroseconds(10);
+    digitalWrite(E, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(E, LOW);
+    delayMicroseconds(100);
+  }
+  
+  digitalWrite(D4, (Data >> 0) & 0x01);
+  digitalWrite(D5, (Data >> 1) & 0x01);
+  digitalWrite(D6, (Data >> 2) & 0x01);
+  digitalWrite(D7, (Data >> 3) & 0x01);
+  
+  delayMicroseconds(10);
+  digitalWrite(E, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(E, LOW);
+  delayMicroseconds(100);
+}
+
+void LcdCommand(unsigned char Command)
+{
+  if (ReadSendState != LOW)
+  {
+    ReadSendState = LOW;
+    digitalWrite(RS, LOW);
+  }
+  
+  LcdSend(Command);
+  if (Command == 0x01) delayMicroseconds(2000);// Clear command takes more time
+}
+
+void LcdWrite(int Letter)
+{
+  if (ReadSendState != HIGH)
+  {
+    ReadSendState = HIGH;
+    digitalWrite(RS, HIGH);
+  }
+  
+  LcdSend(Letter);
+}
+
+void LcdWrite(const char* Text)
+{
+  if (ReadSendState != HIGH)
+  {
+    ReadSendState = HIGH;
+    digitalWrite(RS, HIGH);
+  }
+  
+  for (; *Text != 0; Text++)
+  {
+    char Letter = *Text;
+    LcdSend(Letter);
+  }
+}
+
+void LcdInit(bool bFirstInit)
+{
+  if (bFirstInit)
+  {
+    // Give it time to power up
+    delayMicroseconds(15000);
+    
+    pinMode(RS, OUTPUT);
+    pinMode(E, OUTPUT);
+    pinMode(D4, OUTPUT);
+    pinMode(D5, OUTPUT);
+    pinMode(D6, OUTPUT);
+    pinMode(D7, OUTPUT);
+  }
+  
+  // Start
+  bFourBitMode = false;
+  
+  LcdCommand(0x03);
+  
+  delayMicroseconds(4000);
+  
+  LcdCommand(0x03);
+  LcdCommand(0x03);
+  LcdCommand(0x02);
+  
+  bFourBitMode = true;
+  
+  LcdCommand(0x28);
+  LcdCommand(0x0C);
+  LcdCommand(0x01);// Clear
+  LcdCommand(0x06);
+  
+  LcdCreateChar(0, Battery_0);
+  LcdCreateChar(1, Battery_1);
+  LcdCreateChar(2, Battery_2);
+  LcdCreateChar(3, Battery_3);
+  LcdCreateChar(4, Battery_4);
+  LcdCreateChar(5, Battery_5);
+  LcdCreateChar(6, Battery_6);
+}
+
+void LcdSetCursor(unsigned char Column, unsigned char Row)
+{
+  LcdCommand(0x80 | (Column + (Row != 0 ? 0x40 : 0x00)));
+}
+
+void LcdCreateChar(unsigned char Location, unsigned char SpecialChar[8])
+{
+  LcdCommand(0x40 | (Location << 3));
+  
+  for (unsigned int i = 0; i < 8; i++)
+    LcdWrite(SpecialChar[i]);
+}
+
+//---------------------------------------------------------
+// --------------------- LCD END --------------------------
+//---------------------------------------------------------
+
+void setup()
+{
+  LcdInit(true);
+}
+
+void loop()
+{
+  LcdInit(false);
+  LcdSetCursor(0, 0);
+  LcdWrite("print this");
+}

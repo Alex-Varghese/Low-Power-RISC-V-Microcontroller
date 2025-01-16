@@ -1,0 +1,84 @@
+#define RS 8
+#define E 9
+#define D4 4
+#define D5 5
+#define D6 6
+#define D7 7
+
+
+void lcdwrite(int select, char data)
+{
+  
+  digitalWrite(RS, select);                   //Change RS for command/data
+  digitalWrite(D4, (data & 0b00010000) >> 4);
+  digitalWrite(D5, (data & 0b00100000) >> 5);
+  digitalWrite(D6, (data & 0b01000000) >> 6);
+  digitalWrite(D7, (data & 0b10000000) >> 7);
+  delay(15);
+  digitalWrite(E, HIGH);
+  delay(15);
+  digitalWrite(E, LOW);
+  delay(15);
+  digitalWrite(D4, (data & 0b00000001) >> 0);
+  digitalWrite(D5, (data & 0b00000010) >> 1);
+  digitalWrite(D6, (data & 0b00000100) >> 2);
+  digitalWrite(D7, (data & 0b00001000) >> 3);
+  delay(15);
+  digitalWrite(E, HIGH);
+  delay(15);
+  digitalWrite(E, LOW);
+  delay(15);
+}
+void lcd_cmd(char cmd)
+{
+  lcdwrite(0, cmd);
+}
+void lcd_data(char dat)
+{
+  lcdwrite(1, dat);
+}
+void lcd_ini()
+{
+  
+  lcdwrite(0, 0x33);
+  delay(15);
+  lcdwrite(0, 0x32);
+  delay(15);
+  lcdwrite(0, 0x28);
+  delay(15);
+  lcdwrite(0, 0x01);
+  delay(15);
+  lcdwrite(0, 0x0C);
+  delay(15);
+  lcdwrite(0, 0x06);
+  delay(15);
+  lcdwrite(0, 0x80);
+  delay(15);
+
+}
+
+
+
+void setup() {
+  // put your setup code here, to run once:
+  
+  pinMode(4,OUTPUT);
+  pinMode(5,OUTPUT);
+  pinMode(6,OUTPUT);
+  pinMode(7,OUTPUT);
+  pinMode(8,OUTPUT);
+  pinMode(9,OUTPUT);
+  
+  delay(150);
+  lcd_ini();
+  lcd_data('h');
+  lcd_data('e');
+  lcd_data('y');
+  lcd_data('y');
+
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
+}
