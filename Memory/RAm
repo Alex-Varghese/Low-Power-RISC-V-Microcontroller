@@ -1,0 +1,39 @@
+
+module RAM # (parameter W_ADDR = 11, W_DATA = 32)
+(
+	input clk,
+	input rst,
+	input write_enable, // Write enable
+	input read_enable,
+	input [W_ADDR-1:0] write_address,
+	input [W_ADDR-1:0] read_address1, read_address2,
+	input [W_DATA-1:0] write_data,
+	output reg [W_DATA-1:0] read_data1, read_data2
+
+);
+	integer i;
+    	reg [W_DATA-1:0] RAM [(2**W_ADDR)-1:0];
+
+	always@(posedge clk)
+	begin
+	   if(rst)
+		for( i = 0 ; i < 2**W_ADDR ; i = i + 1 )
+		  RAM[i] <= 0;
+	   else 
+	      begin 
+	      
+	      end
+	end
+	
+	always@(posedge clk or negedge clk)                            // Write block
+	begin
+	     RAM [write_address] <= write_enable ? write_data : RAM [write_address];
+	end
+	
+    always@(posedge clk or negedge rst)                              //  Read block
+    begin
+	     read_data1 <= read_enable ? RAM[read_address1] : read_data1;
+	     read_data2 <= read_enable ? RAM[read_address2] : read_data2;
+	end   
+	
+endmodule
